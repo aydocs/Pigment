@@ -1,3 +1,3 @@
-module github.com/aydocs/Go-Pigment
+module github.com/aydocs/Pigment
 
 go 1.21

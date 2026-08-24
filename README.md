@@ -11,11 +11,11 @@
 ## Install
 
 ```sh
-go get github.com/aydocs/Go-Pigment
+go get github.com/aydocs/Pigment
 ```
 
 ```go
-import "github.com/aydocs/Go-Pigment" // package pigment
+import "github.com/aydocs/Pigment" // package pigment
 ```
 
 ---
@@ -38,7 +38,7 @@ It has zero external dependencies and uses only the Go standard library.
 package main
 
 import (
-    "github.com/aydocs/Go-Pigment"
+    "github.com/aydocs/Pigment"
 )
 
 func main() {
