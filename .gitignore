@@ -1,0 +1,15 @@
+# Test binaries and coverage
+*.test
+*.out
+coverage.txt
+
+# Local tooling state
+.omo/
+.opencode/
+.codegraph
+
+# Editor / OS noise
+.idea/
+.vscode/
+*.swp
+.DS_Store

@@ -6,27 +6,6 @@ import (
 	"strings"
 )
 
-// Colors maps color names to pre-built foreground styles.
-var Colors = map[string]*Style{
-	"black":   New().Fg("black"),
-	"red":     New().Fg("red"),
-	"green":   New().Fg("green"),
-	"yellow":  New().Fg("yellow"),
-	"blue":    New().Fg("blue"),
-	"magenta": New().Fg("magenta"),
-	"cyan":    New().Fg("cyan"),
-	"white":   New().Fg("white"),
-
-	"hi-black":   New().Fg("hi-black"),
-	"hi-red":     New().Fg("hi-red"),
-	"hi-green":   New().Fg("hi-green"),
-	"hi-yellow":  New().Fg("hi-yellow"),
-	"hi-blue":    New().Fg("hi-blue"),
-	"hi-magenta": New().Fg("hi-magenta"),
-	"hi-cyan":    New().Fg("hi-cyan"),
-	"hi-white":   New().Fg("hi-white"),
-}
-
 // Fg returns a new Style with the foreground set from a flexible value.
 func Fg(v any) *Style { return New().Fg(v) }
 
@@ -272,13 +251,17 @@ func HiBgRedString(format string, a ...any) string { return bgColorString("hi-re
 func HiBgGreenString(format string, a ...any) string { return bgColorString("hi-green", format, a...) }
 
 // HiBgYellowString returns text with hi-intensity yellow background.
-func HiBgYellowString(format string, a ...any) string { return bgColorString("hi-yellow", format, a...) }
+func HiBgYellowString(format string, a ...any) string {
+	return bgColorString("hi-yellow", format, a...)
+}
 
 // HiBgBlueString returns text with hi-intensity blue background.
 func HiBgBlueString(format string, a ...any) string { return bgColorString("hi-blue", format, a...) }
 
 // HiBgMagentaString returns text with hi-intensity magenta background.
-func HiBgMagentaString(format string, a ...any) string { return bgColorString("hi-magenta", format, a...) }
+func HiBgMagentaString(format string, a ...any) string {
+	return bgColorString("hi-magenta", format, a...)
+}
 
 // HiBgCyanString returns text with hi-intensity cyan background.
 func HiBgCyanString(format string, a ...any) string { return bgColorString("hi-cyan", format, a...) }
@@ -298,9 +281,6 @@ func PrintfFunc(fg string) func(format string, a ...any) { return New().Fg(fg).P
 
 // PrintlnFunc returns a function that prints lines with the given foreground.
 func PrintlnFunc(fg string) func(a ...any) { return New().Fg(fg).PrintlnFunc() }
-
-// SprintFunc returns a function that returns colorized strings.
-func SprintFunc(fg string) func(a ...any) string { return New().Fg(fg).SprintFunc() }
 
 // SprintfFunc returns a function that returns formatted colorized strings.
 func SprintfFunc(fg string) func(format string, a ...any) string { return New().Fg(fg).SprintfFunc() }

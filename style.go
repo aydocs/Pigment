@@ -5,16 +5,31 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync/atomic"
 )
 
-// Output is the default writer used by the Print* methods.
-var Output io.Writer = os.Stdout
+// output stores the writer used by the Print* methods behind an atomic
+// pointer, so SetOutput never races with concurrent Print calls. A nil
+// entry means "not overridden": the default os.Stdout is resolved at
+// write time, so runtime swaps of os.Stdout (e.g. under go test) apply.
+var output atomic.Pointer[io.Writer]
 
-// SetOutput redirects the Print* output.
+// SetOutput redirects the Print* output. It is safe to call from multiple
+// goroutines. Passing nil resets to the default os.Stdout.
 func SetOutput(w io.Writer) {
-	if w != nil {
-		Output = w
+	if w == nil {
+		output.Store(nil)
+		return
 	}
+	output.Store(&w)
+}
+
+// currentOutput returns the active Print* destination.
+func currentOutput() io.Writer {
+	if p := output.Load(); p != nil {
+		return *p
+	}
+	return os.Stdout
 }
 
 // Attr is a text style attribute (bold, underline...). Combine with OR.
@@ -44,6 +59,9 @@ type colorVal struct {
 }
 
 // Style describes how text is rendered: fg, bg and attributes.
+//
+// allow: SIZE_OK — one cohesive Style rendering unit; the audit spec forbids
+// restructuring it (table-driven open() refactor explicitly rejected).
 type Style struct {
 	fg      colorVal
 	bg      colorVal
@@ -54,9 +72,14 @@ type Style struct {
 // New returns an empty Style.
 func New() *Style { return &Style{} }
 
-// Clone returns a deep copy of the style.
+// Clone returns an independent copy of the style: mutating the clone,
+// including its per-style enabled override, never affects the original.
 func (s *Style) Clone() *Style {
 	c := *s
+	if s.enabled != nil {
+		e := *s.enabled
+		c.enabled = &e
+	}
 	return &c
 }
 
@@ -82,7 +105,7 @@ func (s *Style) active() bool {
 	if s.enabled != nil {
 		return *s.enabled
 	}
-	return Enabled
+	return colorEnabled()
 }
 
 // Fg sets the foreground from a flexible value: Color, *Color, "#rrggbb",
@@ -108,9 +131,10 @@ func (s *Style) FgHex(h string) *Style {
 	return s
 }
 
-// FgPalette sets the foreground to an xterm 256 index (0..255).
+// FgPalette sets the foreground to an xterm 256 index. Values outside
+// 0..255 are clamped so the emitted SGR sequence stays well-formed.
 func (s *Style) FgPalette(n int) *Style {
-	s.fg = colorVal{isSet: true, isPal: true, pal: n}
+	s.fg = colorVal{isSet: true, isPal: true, pal: clampPalette(n)}
 	return s
 }
 
@@ -136,9 +160,10 @@ func (s *Style) BgHex(h string) *Style {
 	return s
 }
 
-// BgPalette sets the background to an xterm 256 index.
+// BgPalette sets the background to an xterm 256 index. Values outside
+// 0..255 are clamped so the emitted SGR sequence stays well-formed.
 func (s *Style) BgPalette(n int) *Style {
-	s.bg = colorVal{isSet: true, isPal: true, pal: n}
+	s.bg = colorVal{isSet: true, isPal: true, pal: clampPalette(n)}
 	return s
 }
 
@@ -265,17 +290,19 @@ func (s *Style) Sprintln(a ...any) string {
 	return s.Paint(strings.TrimSuffix(fmt.Sprintln(a...), "\n")) + "\n"
 }
 
-// Print writes the painted text to Output.
-func (s *Style) Print(a ...any) (int, error) { return fmt.Fprint(Output, s.Paint(fmt.Sprint(a...))) }
-
-// Println writes the painted text (with newline) to Output.
-func (s *Style) Println(a ...any) (int, error) {
-	return fmt.Fprint(Output, s.Sprintln(a...))
+// Print writes the painted text to the current output writer.
+func (s *Style) Print(a ...any) (int, error) {
+	return fmt.Fprint(currentOutput(), s.Paint(fmt.Sprint(a...)))
 }
 
-// Printf writes the formatted, painted text to Output.
+// Println writes the painted text (with newline) to the current output writer.
+func (s *Style) Println(a ...any) (int, error) {
+	return fmt.Fprint(currentOutput(), s.Sprintln(a...))
+}
+
+// Printf writes the formatted, painted text to the current output writer.
 func (s *Style) Printf(format string, a ...any) (int, error) {
-	return fmt.Fprint(Output, s.Paint(fmt.Sprintf(format, a...)))
+	return fmt.Fprint(currentOutput(), s.Paint(fmt.Sprintf(format, a...)))
 }
 
 // Fprint writes the painted text to w.
@@ -338,12 +365,19 @@ func (s *Style) FprintlnFunc() func(w io.Writer, a ...any) {
 	return func(w io.Writer, a ...any) { s.Fprintln(w, a...) }
 }
 
-// Equals reports whether two styles render identically.
+// Equals reports whether two styles render identically, including their
+// per-style enabled overrides.
 func (s *Style) Equals(o *Style) bool {
 	if s == nil || o == nil {
 		return s == o
 	}
-	return s.fg == o.fg && s.bg == o.bg && s.attrs == o.attrs
+	if s.fg != o.fg || s.bg != o.bg || s.attrs != o.attrs {
+		return false
+	}
+	if (s.enabled == nil) != (o.enabled == nil) {
+		return false
+	}
+	return s.enabled == nil || *s.enabled == *o.enabled
 }
 
 func toColorVal(v any) (colorVal, bool) {
@@ -381,3 +415,13 @@ func toColorVal(v any) (colorVal, bool) {
 }
 
 func boolPtr(v bool) *bool { return &v }
+
+func clampPalette(n int) int {
+	if n < 0 {
+		return 0
+	}
+	if n > 255 {
+		return 255
+	}
+	return n
+}

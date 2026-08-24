@@ -2,6 +2,7 @@ package pigment
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -43,7 +44,7 @@ func MustHex(s string) Color {
 	return c
 }
 
-// Mix blends c and d at t (0..1).
+// Mix blends c and d at t (0..1). Component values are rounded half up.
 func (c Color) Mix(d Color, t float64) Color {
 	if t < 0 {
 		t = 0
@@ -52,17 +53,20 @@ func (c Color) Mix(d Color, t float64) Color {
 		t = 1
 	}
 	return Color{
-		R: uint8(float64(c.R) + t*float64(int(d.R)-int(c.R))),
-		G: uint8(float64(c.G) + t*float64(int(d.G)-int(c.G))),
-		B: uint8(float64(c.B) + t*float64(int(d.B)-int(c.B))),
+		R: uint8(float64(c.R) + t*float64(int(d.R)-int(c.R)) + 0.5),
+		G: uint8(float64(c.G) + t*float64(int(d.G)-int(c.G)) + 0.5),
+		B: uint8(float64(c.B) + t*float64(int(d.B)-int(c.B)) + 0.5),
 	}
 }
 
-// HSL builds a Color from hue(0..360), sat(0..1), light(0..1).
+// HSL builds a Color from hue(0..360), sat(0..1), light(0..1). Saturation and
+// lightness are clamped into [0,1]; the hue wraps (e.g. -30 == 330).
 func HSL(h, s, l float64) Color {
 	h = mod(h, 360)
-	c := (1 - absF(2*l-1)) * s
-	x := c * (1 - absF(mod(h/60, 2)-1))
+	s = clamp01(s)
+	l = clamp01(l)
+	c := (1 - math.Abs(2*l-1)) * s
+	x := c * (1 - math.Abs(mod(h/60, 2)-1))
 	m := l - c/2
 	var r, g, b float64
 	switch {
@@ -80,9 +84,9 @@ func HSL(h, s, l float64) Color {
 		r, g, b = c, 0, x
 	}
 	return Color{
-		R: uint8((r + m) * 255),
-		G: uint8((g + m) * 255),
-		B: uint8((b + m) * 255),
+		R: uint8((r+m)*255 + 0.5),
+		G: uint8((g+m)*255 + 0.5),
+		B: uint8((b+m)*255 + 0.5),
 	}
 }
 
@@ -166,6 +170,19 @@ var namedColors = map[string]Color{
 	"tan": {210, 180, 140}, "thistle": {216, 191, 216}, "wheat": {245, 222, 179},
 	"whitesmoke": {245, 245, 245}, "yellowgreen": {154, 205, 50}, "rebeccapurple": {102, 51, 153},
 
+	// Remaining CSS Color Module Level 4 extended keywords.
+	"aliceblue": {240, 248, 255}, "antiquewhite": {250, 235, 215},
+	"aquamarine": {127, 255, 212}, "azure": {240, 255, 255},
+	"bisque": {255, 228, 196}, "blanchedalmond": {255, 235, 205},
+	"blueviolet": {138, 43, 226}, "burlywood": {222, 184, 135},
+	"cadetblue": {95, 158, 160}, "chartreuse": {127, 255, 0},
+	"cornflowerblue": {100, 149, 237}, "cornsilk": {255, 248, 220},
+	"darkgoldenrod": {184, 134, 11}, "darkslategrey": {47, 79, 79},
+	"dimgrey": {105, 105, 105}, "floralwhite": {255, 250, 240},
+	"goldenrod": {218, 165, 32}, "lightgoldenrodyellow": {250, 250, 210},
+	"lightslategrey": {119, 136, 153}, "limegreen": {50, 205, 50},
+	"moccasin": {255, 228, 181}, "slategrey": {112, 128, 144},
+
 	"hi-black":   brightColors[0],
 	"hi-red":     brightColors[1],
 	"hi-green":   brightColors[2],
@@ -202,21 +219,22 @@ func clamp8(v int) uint8 {
 	}
 }
 
+func clamp01(v float64) float64 {
+	switch {
+	case v < 0:
+		return 0
+	case v > 1:
+		return 1
+	default:
+		return v
+	}
+}
+
+// mod wraps a into [0,n) via math.Mod, avoiding int64 truncation overflow.
 func mod(a, n float64) float64 {
-	r := mathMod(a, n)
+	r := math.Mod(a, n)
 	if r < 0 {
 		r += n
 	}
 	return r
-}
-
-func mathMod(a, n float64) float64 {
-	return a - n*float64(int64(a/n))
-}
-
-func absF(v float64) float64 {
-	if v < 0 {
-		return -v
-	}
-	return v
 }
