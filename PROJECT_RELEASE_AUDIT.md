@@ -131,7 +131,8 @@ Yerel ortam Go `1.27.3-X:nodwarf5`, module minimumu Go `1.21`. Go 1.21 CI
 - [x] `CHANGELOG.md`
 - [x] Secret taraması
 - [x] Harici runtime dependency yok
-- [ ] Release commit ve semver tag
+- [x] Release commit (`e434f709925047e1a3653a492c05369ba155fa04`)
+- [ ] Semver tag (CI altyapı sonucu başarısız olduğu için oluşturulmadı)
 - [x] CI cross-platform compile matrix
 - [x] Issue/PR template ve Code of Conduct
 - [x] Fuzz ve benchmark kontrolleri
@@ -152,10 +153,13 @@ Yerel ortam Go `1.27.3-X:nodwarf5`, module minimumu Go `1.21`. Go 1.21 CI
 ## Son nihai değerlendirme
 
 **Küçük düzeltmelerden sonra hazır.** Kod, test, cross-compile, secret ve
-vulnerability kontrolleri başarılı; release commit/tag ve GitHub Actions sonucu
-henüz bu çalışma oturumunda tamamlanmadı. AIX/Solaris runtime davranışı ayrıca
-doğrulanmadı ve terminale güvenilmeyen metin basma sınırı uygulama güvenlik
-sözleşmesine bağlıdır.
+vulnerability kontrolleri yerelde başarılı; release commit remote `main`
+branch’ine push edildi. GitHub Actions run’ı
+[`42506524936`](https://github.com/aydocs/Pigment/actions/runs/42506524936)
+tüm job’larda step çalıştırmadan başarısız oldu ve retry da aynı sonucu verdi;
+bu nedenle CI sonucu GitHub runner altyapısı tarafından doğrulanamadı ve tag
+oluşturulmadı. AIX/Solaris runtime davranışı ayrıca doğrulanmadı; terminale
+güvenilmeyen metin basma sınırı uygulama güvenlik sözleşmesine bağlıdır.
 
 Linux/macOS/Windows hedefleri ve cross-compile edilen diğer hedefler için sağlam
 bir temel var. Release commit/tag ve CI doğrulaması tamamlandığında açık kaynak
