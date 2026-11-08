@@ -153,13 +153,15 @@ Yerel ortam Go `1.27.3-X:nodwarf5`, module minimumu Go `1.21`. Go 1.21 CI
 ## Son nihai değerlendirme
 
 **Küçük düzeltmelerden sonra hazır.** Kod, test, cross-compile, secret ve
-vulnerability kontrolleri yerelde başarılı; release commit remote `main`
-branch’ine push edildi. GitHub Actions run’ı
-[`42506524936`](https://github.com/aydocs/Pigment/actions/runs/42506524936)
-tüm job’larda step çalıştırmadan başarısız oldu ve retry da aynı sonucu verdi;
-bu nedenle CI sonucu GitHub runner altyapısı tarafından doğrulanamadı ve tag
-oluşturulmadı. AIX/Solaris runtime davranışı ayrıca doğrulanmadı; terminale
-güvenilmeyen metin basma sınırı uygulama güvenlik sözleşmesine bağlıdır.
+ vulnerability kontrolleri yerelde başarılı; release commit remote `main`
+ branch’ine push edildi. `Coardian-software/Pigment` Actions run’ı
+ [`42506695904`](https://github.com/Coardian-software/Pigment/actions/runs/42506695904)
+ başarılı oldu. `aydocs/Pigment` run’ı
+ [`42506676554`](https://github.com/aydocs/Pigment/actions/runs/42506676554)
+ GitHub hesabındaki billing kilidi nedeniyle job’ları başlatamadı; bu yüzden
+ aydocs CI sonucu başarılı kabul edilmedi ve tag oluşturulmadı. AIX/Solaris
+ runtime davranışı ayrıca doğrulanmadı; terminale güvenilmeyen metin basma sınırı
+ uygulama güvenlik sözleşmesine bağlıdır.
 
 Linux/macOS/Windows hedefleri ve cross-compile edilen diğer hedefler için sağlam
 bir temel var. Release commit/tag ve CI doğrulaması tamamlandığında açık kaynak
