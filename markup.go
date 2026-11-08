@@ -198,7 +198,20 @@ func isValidToken(tok string) bool {
 	}
 	for _, prefix := range []string{"fg=", "bg=", "hex=", "fghex=", "bghex="} {
 		if strings.HasPrefix(lower, prefix) {
-			return len(tok) > len(prefix)
+			value := strings.TrimSpace(tok[len(prefix):])
+			if value == "" {
+				return false
+			}
+			if prefix == "hex=" || prefix == "fghex=" || prefix == "bghex=" {
+				_, err := Hex(value)
+				return err == nil
+			}
+			if strings.HasPrefix(strings.ToLower(value), "#") {
+				_, err := Hex(value)
+				return err == nil
+			}
+			_, ok := Named(value)
+			return ok
 		}
 	}
 	for _, prefix := range []string{"palette=", "bgpalette="} {

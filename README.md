@@ -18,6 +18,8 @@ go get github.com/aydocs/Pigment
 import "github.com/aydocs/Pigment" // package pigment
 ```
 
+Requires Go 1.21 or newer. The library has no external runtime dependencies.
+
 ---
 
 ## About
@@ -235,6 +237,9 @@ pigment.New().Enable().Println("forced on")
 pigment.New().Disable().Println("forced off")
 ```
 
+The supported environment variables are listed in [`.env.example`](.env.example).
+They are optional; pigment does not load dotenv files itself.
+
 ---
 
 ## Compared to fatih/color
@@ -278,3 +283,20 @@ multiple goroutines is *not* synchronized — clone it per goroutine if needed.
 ## License
 
 MIT
+
+## Development
+
+```sh
+gofmt -w .
+go test ./...
+go test -race ./...
+go vet ./...
+go build ./...
+```
+
+Additional checks used by CI include coverage reporting, cross-platform
+compilation, and Go vulnerability scanning. Fuzz the markup parser locally with
+`go test -fuzz=FuzzRenderNeverPanics -fuzztime=30s ./...`.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines and
+[SECURITY.md](SECURITY.md) for safe use and vulnerability reporting.
